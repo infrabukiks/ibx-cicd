@@ -625,5 +625,149 @@ git push
 ✅ EC2 is live
 ✅ K3s is installed
 ✅ SSH access is secured
+
 ---
 
+# ✅ Step 3: Install Kubernetes Tools (ArgoCD)
+
+## 🧠 Goal:
+
+Install **ArgoCD** into your **K3s cluster** so you can manage app deployments using **GitOps** — just push code to Git and ArgoCD takes care of the rest!
+
+---
+
+## 🛠 Prerequisites
+
+Ensure the following:
+
+* ✅ You're SSH’d into your EC2 instance (`ubuntu@...`)
+* ✅ You've verified K3s is running:
+
+  ```bash
+  sudo kubectl get nodes
+  ```
+
+---
+
+## 🔹 3.1. Create the `argocd` Namespace
+
+Inside EC2:
+
+```bash
+sudo kubectl create namespace argocd
+```
+
+---
+
+## 🔹 3.2. Install ArgoCD Core
+
+Install the official manifest:
+
+```bash
+sudo kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+✅ This installs:
+
+* `argocd-server`
+* `argocd-repo-server`
+* `argocd-application-controller`
+* `argocd-dex-server`
+
+---
+
+## 🔹 3.3. Wait for All ArgoCD Pods to Start
+
+```bash
+sudo kubectl get pods -n argocd -w
+```
+
+Wait until all pods are in `Running` status. Press `Ctrl+C` to exit.
+
+---
+
+## 🔹 3.4. Set Up Local Access to the ArgoCD Dashboard
+
+Since ArgoCD is inside your EC2 VM, we’ll use **SSH port forwarding** so you can view the dashboard from your **local browser**.
+
+### 🧩 Step 1: Start SSH tunnel **from your laptop**
+
+```bash
+ssh -i /Users/john.abucay/infrabukiks/aws-cred/infrabukiks.pem -L 8080:localhost:8080 ubuntu@<EC2_PUBLIC_IP>
+```
+
+Keep this terminal open — it forwards EC2 port `8080` to your `localhost:8080`.
+
+### 🧩 Step 2: Inside EC2, run:
+
+```bash
+sudo kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+### 🔗 Step 3: Visit the ArgoCD UI in your browser
+
+👉 Go to: [https://localhost:8080](https://localhost:8080)
+
+✅ You’ll see a TLS warning (self-signed cert). Proceed anyway.
+
+---
+
+## 🔹 3.5. Get ArgoCD Admin Password
+
+Inside EC2:
+
+```bash
+sudo kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
+```
+
+📋 Save this password.
+**Username:** `admin`
+**Password:** (the output above)
+
+---
+
+## 🔹 3.6. (Optional) Use ArgoCD CLI
+
+Install CLI locally (optional but helpful):
+
+```bash
+brew install argocd  # For macOS
+```
+
+Then login:
+
+```bash
+argocd login localhost:8080 --username admin --password <your-password> --insecure
+```
+
+---
+
+## 🔄 3.7. (Optional) Version Control ArgoCD Setup
+
+To track ArgoCD setup in your repo:
+
+```bash
+mkdir -p infra/k8s-bootstrap
+cd infra/k8s-bootstrap
+curl -O https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+Then:
+
+```bash
+git add infra/k8s-bootstrap
+git commit -m "🚀 Installed ArgoCD in K3s cluster"
+git push
+```
+
+---
+
+## ✅ Checkpoint
+
+✅ You now have a fully working **ArgoCD GitOps controller** running on your K3s cluster.
+
+You can now:
+
+* Deploy apps by pushing YAML to Git
+* Manage environments visually
+* Automate sync and rollback
