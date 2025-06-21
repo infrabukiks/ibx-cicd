@@ -8,3 +8,8 @@ node_modules/
 .DS_Store
 *.tfstate
 *.tfstate.backup
+# Ignore Terraform state and build artifacts
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+infra/terraform/terraform.tfstate
+infra/terraform/terraform.tfstate.backup
