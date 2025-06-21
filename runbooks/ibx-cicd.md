@@ -771,3 +771,128 @@ You can now:
 * Deploy apps by pushing YAML to Git
 * Manage environments visually
 * Automate sync and rollback
+
+Here is your fully **updated Step 4: CI with GitHub Actions**, enhanced with **dual tagging** logic to:
+
+* Tag image as `latest` when pushing to `main`
+* Tag image as `v1.0.0`, `v1.2.3`, etc., when pushing Git tags
+
+---
+
+# ✅ Step 4: Set Up CI with GitHub Actions (Auto Tagging)
+
+## 🧠 Goal:
+
+Set up a modern CI pipeline that:
+
+* Builds your app Docker image
+* Pushes it to **GitHub Container Registry (GHCR)**
+* Automatically applies:
+
+  * ✅ `latest` tag on push to `main`
+  * ✅ `vX.X.X` tag on Git release tags
+
+---
+
+## 🔹 4.1. Prerequisites
+
+* You have **enabled public GHCR visibility** for your org:
+  `https://github.com/organizations/infrabukiks/settings/packages`
+
+---
+
+## 🔹 4.2. Create the GitHub Actions Workflow
+
+Create:
+
+```bash
+mkdir -p .github/workflows
+touch .github/workflows/ci.yml
+```
+
+Paste this content:
+
+```yaml
+# .github/workflows/ci.yml
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'  # e.g., v1.0.0
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write  # Required for pushing to GHCR
+
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Build and Push Docker Image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/web-app
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG=${{ github.ref_name }}
+            docker build -t $IMAGE:$TAG ./apps/web-app
+            docker push $IMAGE:$TAG
+          else
+            docker build -t $IMAGE:latest ./apps/web-app
+            docker push $IMAGE:latest
+          fi
+```
+
+---
+
+## 🔹 4.3. Commit and Push the Workflow
+
+```bash
+git checkout -b ci-tagging
+git add .github/workflows/ci.yml
+git commit -m "🤖 Add CI workflow with dual tagging (latest + version)"
+git push origin ci-tagging
+```
+
+Merge the PR into `main`.
+
+---
+
+## ✅ 4.4. Validate Your Pipeline
+
+| Action                  | Image Tag Created                    |
+| ----------------------- | ------------------------------------ |
+| Push to `main`          | `ghcr.io/infrabukiks/web-app:latest` |
+| Create Git tag `v1.0.0` | `ghcr.io/infrabukiks/web-app:v1.0.0` |
+
+### Example Git Tag Command:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+---
+
+## ✅ Checkpoint
+
+✅ GHCR `web-app` image now supports:
+
+* `latest` from `main`
+* Semantic version tags (e.g., `v1.0.0`) from Git tags
