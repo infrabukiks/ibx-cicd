@@ -34,15 +34,42 @@ This project demonstrates a complete DevOps pipeline built **from scratch to pro
 
 ```
 
-ibx-cicd/
-├── .github/workflows/          # GitHub Actions CI
-├── apps/web-app/               # FastAPI App & Dockerfile
-├── charts/web-app/             # Helm chart (optional)
+ibx-cicd/                             # Root project folder
+├── .github/                         # GitHub Actions workflows
+│   └── workflows/
+│       └── ci.yml                   # CI pipeline: test, build, push image
+├── apps/
+│   └── web-app/
+│       ├── Dockerfile               # Dockerfile for the web app
+│       ├── app/                     # App source code
+│       ├── requirements.txt         # Python/Node/etc. dependencies
+│       └── README.md                # App-specific info
+├── charts/
+│   └── web-app/                     # Helm chart for K8s deployment
+│       ├── templates/
+│       └── values.yaml
 ├── infra/
-│   ├── terraform/              # Terraform EC2 provisioning
-│   └── k8s-bootstrap/          # ArgoCD App manifests
-├── runbooks/                   # Incident response guides
-└── README.md
+│   ├── terraform/
+│   │   ├── main.tf                  # Terraform config for infra
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── k8s-bootstrap/
+│       ├── argocd-install.yaml      # ArgoCD manifests
+│       └── namespaces.yaml
+├── k8s/
+│   └── overlays/
+│       └── prod/
+│           ├── kustomization.yaml
+│           └── deployment.yaml
+├── runbooks/
+│   ├── merge-conflict.md
+│   ├── ci-failure.md
+│   ├── config-break.md
+│   └── canary-observation.md
+├── .gitignore
+├── README.md
+└── LICENSE
+
 
 ````
 
