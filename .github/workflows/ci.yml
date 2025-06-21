@@ -1,5 +1,3 @@
-# .github/workflows/ci.yml
-
 name: CI Pipeline
 
 on:
@@ -30,20 +28,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📦 Build and Push Docker Image
+      - name: 🐳 Build and Push Docker Image
         env:
-          IMAGE: ghcr.io/infrabukiks/web-app
-          REF_TYPE: ${{ github.ref_type }}
-          REF_NAME: ${{ github.ref_name }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/web-app
+          GIT_REF: ${{ github.ref }}
         run: |
-          echo "📦 Image will be pushed to: $IMAGE"
+          echo "📦 Target Image: $IMAGE"
 
-          if [[ "$REF_TYPE" == "tag" ]]; then
-            echo "🏷️ Detected tag push: $REF_NAME"
-            docker build -t $IMAGE:$REF_NAME ./apps/web-app
-            docker push $IMAGE:$REF_NAME
-          else
-            echo "🚀 Detected push to branch. Tagging as latest."
+          if [[ "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "🚀 Detected push to 'main' — tagging as 'latest'"
             docker build -t $IMAGE:latest ./apps/web-app
             docker push $IMAGE:latest
+
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
+            TAG=${GIT_REF#refs/tags/}
+            echo "🏷️ Detected Git tag '$TAG' — tagging as '$TAG'"
+            docker build -t $IMAGE:$TAG ./apps/web-app
+            docker push $IMAGE:$TAG
+
+          else
+            echo "⏭️ Not main or tag — skipping Docker push."
           fi
