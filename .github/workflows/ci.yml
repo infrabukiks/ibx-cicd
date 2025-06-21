@@ -31,14 +31,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📦 Build and Push Docker Image
+        env:
+          IMAGE: ghcr.io/infrabukiks/web-app
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/web-app
+          echo "📦 Image will be pushed to: $IMAGE"
 
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            TAG=${{ github.ref_name }}
-            docker build -t $IMAGE:$TAG ./apps/web-app
-            docker push $IMAGE:$TAG
+          if [[ "$REF_TYPE" == "tag" ]]; then
+            echo "🏷️ Detected tag push: $REF_NAME"
+            docker build -t $IMAGE:$REF_NAME ./apps/web-app
+            docker push $IMAGE:$REF_NAME
           else
+            echo "🚀 Detected push to branch. Tagging as latest."
             docker build -t $IMAGE:latest ./apps/web-app
             docker push $IMAGE:latest
           fi
