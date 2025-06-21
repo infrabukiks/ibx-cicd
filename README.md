@@ -1,4 +1,4 @@
-# 🚀 ibx-cicd: Zero to Production DevOps Case Study
+# 🚀 ibx-cicd
 
 This project demonstrates a complete DevOps pipeline built **from scratch to production**, using modern tools and GitOps practices. It's designed for beginners who want to understand CI/CD, Kubernetes, observability, and real-world troubleshooting in a cloud-native environment.
 
