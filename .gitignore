@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.db
+*.env
+*.log
+.env
+node_modules/
+.DS_Store
+*.tfstate
+*.tfstate.backup
